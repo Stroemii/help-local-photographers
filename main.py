@@ -28,48 +28,48 @@ url = pyqrcode.create('https://www.loremipsum.de/')
 # QR-Code als PNG speichern
 url.png('qr_code.png', scale=8)
 
+       
 # Dateipfade für Bilder und Bilder-Versand-Ordner (Ziel) in Variablen abspeichern
-IMAGE_FOLDER = 'C:/Users/Stroemi/Desktop/Python-Einstieg/Kursmaterialien/07 - pillow/11 - Teil 11/Bilder'
+IMAGE_FOLDER = os.path.join("..", "Bilder")
 BILDER_VERSAND = os.path.join(IMAGE_FOLDER, 'Bilder_Versand')
 
 # Neuen Ordner anlegen, in welchem die bearbeiteten Bilder abgespeichert werden sollen
 if not os.path.isdir(os.path.join(BILDER_VERSAND)):
     os.mkdir(BILDER_VERSAND)
 
+with Image.open('qr_code.png') as qr_code, Image.open("logo2.png") as logo: # QR-Code und Logo öffnen
 
-# Alle Bilder im Ordner ermitteln (Ornder aussortieren)...
-for image in os.listdir(IMAGE_FOLDER):
-    image_path = os.path.join(IMAGE_FOLDER, image)
-    if os.path.isfile(image_path):  # wenn Datei ein File (also Bild) ist, dann...
-        with Image.open(image_path) as im, Image.open('qr_code.png') as qr_code, Image.open("logo2.png") as logo:           # ... Bild, QR-Code mit Image.open öffnen
-            width, height = im.size                  # Größe des Bildes in Variablen abspeichern
-            if width > 400:                  # wenn die Breite des Bildes größer als 400 Pixel, soll das Bild verkleinert werden...
-                new_width = 400                     # auf 400 Pixel
-                new_height = int(height / (width / new_width))          # die Höhe des Bildes soll im gleichen Maßstab (also Weite/neue Weite) verkleinert werden
-            else:
-                new_width = width
-                new_height = height                 # Wenn das Bild schmaler als 400 Pixel ist, soll es gleich bleiben
-            #print(new_height, new_width)
+    for image in os.listdir(IMAGE_FOLDER):                 # Alle Bilder im Ordner ermitteln (Ordner aussortieren)...
+        image_path = os.path.join(IMAGE_FOLDER, image)
+        if os.path.isfile(image_path):                     # wenn Datei ein File (also Bild) ist, dann...
+            with Image.open(image_path) as im:             # ... Bild mit Image.open öffnen
+                
+                original_width, original_height = im.size  # Größe des Bildes in Variablen abspeichern
+                if original_width > 400:                   # wenn die Breite des Bildes größer als 400 Pixel, soll das Bild verkleinert werden...
+                    new_width = 400                        # auf 400 Pixel
+                    new_height = int(original_height / (original_width / new_width))          # die Höhe des Bildes soll im gleichen Maßstab (also Weite/neue Weite) verkleinert werden
+                else:
+                    new_width = original_width
+                    new_height = original_height                            # Wenn das Bild schmaler als 400 Pixel ist, soll es gleich bleiben
+                
+                im = im.resize((new_width, new_height))                     # das Bild anhand der neuen Abmaße neu skaliert
+                
+                # QR-Code:
+                size_qr_code = int(new_width / 5)                           # Kantenlänge des QR-Codes soll ein fÜNFTEL der Breite des Bildes betragen
+                qr_code_scaled = qr_code.resize((size_qr_code, size_qr_code))      # Resizing des QR-Codes
+                
+                # print(qr_code)
+                
+                # nächster Schritt: QR-Code einfügen:
+                im.paste(qr_code_scaled, (0, (new_height-size_qr_code)))           # QR-Code soll in der unteren linken Ecke sein (also Position Bilderhöhe minus QR-Code-Size)
+                
+                width_logo, height_logo = logo.size                         # Logo-Sizes abspeichern
+                new_width_logo = int(new_width / 2)                         # Logo-Breite soll halb so breit sein, wie das Bild
+                
+                new_height_logo = int(height_logo / (width_logo / new_width_logo))  # Höhe des Logos soll entsprechend dem Verkleinerung der Breite angepasst werden
+                logo_scaled = logo.resize((new_width_logo, new_height_logo))       # Logo-Resizing
 
-            im = im.resize((new_width, new_height)) # das Bild anhand der neuen Abmaße neu skaliert
-            #print(im, qr_code)
-            
-            # QR-Code:
-            size_qr_code = int(new_width / 5)           # Kantenlänge des QR-Codes soll ein fÜNFTEL der Breite des Bildes betragen
-            qr_code = qr_code.resize((size_qr_code, size_qr_code))      # Resizing des QR-Codes
-            
-            # print(qr_code)
-            
-            # nächster Schritt: QR-Code einfügen:
-            im.paste(qr_code, (0, (new_height-size_qr_code)))           # QR-Code soll in der unteren linken Ecke sein (also Position Bilderhöhe minus QR-Code-Size)
-            
-            width_logo, height_logo = logo.size                         # Logo-Sizes abspeichern
-            new_width_logo = int(new_width / 2)                         # Logo-Breite soll halb so breit sein, wie das Bild
-            
-            new_height_logo = int(height_logo / (width_logo / new_width_logo))  # Höhe des Logos soll entsprechend dem Verkleinerung der Breite angepasst werden
-            logo = logo.resize((new_width_logo, new_height_logo))       # Logo-Resizing
+                im.paste(logo_scaled, (new_width_logo, new_height-new_height_logo), logo_scaled)
 
-            im.paste(logo, (new_width_logo, new_height-new_height_logo), logo)
-
-            im.save(os.path.join(BILDER_VERSAND, image))                # Bild abspeichern
+                im.save(os.path.join(BILDER_VERSAND, image))                # Bild abspeichern
 
